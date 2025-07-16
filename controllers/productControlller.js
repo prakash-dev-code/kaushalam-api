@@ -1,4 +1,4 @@
-const Product = require("./../models/productModel");
+const Product = require("../models/mongo/productModel");
 const Factory = require("./handleCrud");
 
 exports.getAllProduct = Factory.getAll(Product);
@@ -24,7 +24,7 @@ exports.updateProduct = async (req, res) => {
       "price",
       "discountedPrice",
       "category",
-      "stock"
+      "stock",
     ];
 
     fieldsToUpdate.forEach((field) => {
@@ -70,19 +70,11 @@ exports.updateProduct = async (req, res) => {
 // In your controller
 exports.createProduct = async (req, res) => {
   try {
-
     // Extract text fields
-    const {
-      name,
-      description,
-      price,
-      discountedPrice,
-      category,
-      stock,
-    } = req.body;
+    const { name, description, price, discountedPrice, category, stock } =
+      req.body;
 
     // Process variants safely
-
 
     // Process images
     const imageData = (req.files || []).map((file, i) => {
@@ -103,7 +95,7 @@ exports.createProduct = async (req, res) => {
       discountedPrice: parseFloat(discountedPrice),
       category,
       stock: parseInt(stock),
-      seller:req.user._id,
+      seller: req.user._id,
       images: imageData, // This will store S3 URLs in MongoDB
     });
 

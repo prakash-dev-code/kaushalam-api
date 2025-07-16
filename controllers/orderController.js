@@ -1,5 +1,5 @@
-const Order = require("./../models/orderModel");
-const User = require("../models/userModel");
+const Order = require("../models/mongo/orderModel");
+const User = require("../models/mongo/userModel");
 const Factory = require("./handleCrud");
 
 // exports.getAllOrdersAdmin = Factory.getAll(Order);

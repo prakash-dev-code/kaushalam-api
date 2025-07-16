@@ -1,6 +1,6 @@
-const User = require("./../models/userModel");
+const User = require("../models/mongo/userModel");
 const Factory = require("./handleCrud");
-const Product = require("./../models/productModel");
+const Product = require("../models/mongo/productModel");
 const mongoose = require("mongoose");
 
 exports.getAllUsers = Factory.getAll(User);
