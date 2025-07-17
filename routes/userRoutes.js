@@ -13,6 +13,7 @@ userRouter.route("/sign-in").post(authController.loginUser);
 userRouter.route("/sign-up").post(authController.registerUser);
 userRouter.route("/verify-email").post(authController.verifyEmail);
 userRouter.get("/", userController.getAllUsers);
+userRouter.delete("/:userId", userController.deleteUser);
 // userRouter.route("/forget-password").post(authController.forgetPassword);
 // userRouter.route("/reset-password/:token").patch(authController.resetPassword);
 

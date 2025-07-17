@@ -13,14 +13,14 @@ const User = prisma.user;
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const doc = await prisma.user.findMany(); // Returns all fields
+    const doc = await prisma.user.findMany();
 
     res.status(200).json({
       status: "success",
-      total: doc.length,
+      totalCount: doc.length,
       data: {
         doc,
-      }, 
+      },
     });
   } catch (err) {
     console.error("Error fetching users:", err);
@@ -32,9 +32,44 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-exports.updateUser = Factory.updateOne(User);
-exports.deleteUser = Factory.deleteOne(User);
-exports.getUser = Factory.getOne(User);
+// exports.updateUser = Factory.updateOne(User);
+exports.deleteUser = async (req, res) => {
+  const { userId } = req.params;
+  console.log(userId, "ID");
+
+  try {
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId }, // 👈 convert to number if id is Int in PostgreSQL
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: "fail",
+        message: "User not found",
+      });
+    }
+
+    // Delete the user
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "User deleted successfully",
+    });
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to delete user",
+      error: err.message,
+    });
+  }
+};
+
+// exports.getUser = Factory.getOne(User);
 
 exports.addToCart = async (req, res) => {
   try {
