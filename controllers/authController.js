@@ -73,7 +73,7 @@ exports.verifyEmail = async (req, res) => {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: userDoc.id },
       data: {
         isVerified: true,
@@ -82,16 +82,15 @@ exports.verifyEmail = async (req, res) => {
       },
     });
 
-    const token = jwt.sign({ id: userDoc.id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: updatedUser.id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
-    console.log(userDoc, "UD");
 
     res.status(200).json({
       status: "success",
       token,
       data: {
-        user: userDoc,
+        user: updatedUser,
       },
     });
   } catch (err) {
@@ -139,5 +138,53 @@ exports.loginUser = async (req, res) => {
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Login failed", error: err });
+  }
+};
+
+// const prisma = require("../prisma"); // adjust path to your prisma client
+
+exports.getMe = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    }
+
+    const userDoc = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      // remove `select` to get all fields
+    });
+
+    if (!userDoc) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    //     data: {
+    //   user: req.user, // user is already set in protect middleware
+    // },
+
+    res.status(200).json({
+      status: "success",
+      data: { user: userDoc },
+    });
+  } catch (error) {
+    console.error("Error fetching current user:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Something went wrong",
+      error: error.message,
+    });
   }
 };

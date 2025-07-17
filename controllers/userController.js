@@ -173,3 +173,34 @@ exports.clearCart = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.updateUser = async (req, res) => {
+  const { userId } = req.params;
+  const { name, shippingLocation, shippingPhone } = req.body;
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name,
+        shippingLocation,
+        shippingPhone,
+      },
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "User updated successfully",
+      data: {
+        user: updatedUser,
+      },
+    });
+  } catch (err) {
+    console.error("Error updating user:", err);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to update user",
+      error: err.message,
+    });
+  }
+};
