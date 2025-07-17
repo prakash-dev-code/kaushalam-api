@@ -52,11 +52,11 @@ const productSchema = new mongoose.Schema(
         default: 0,
       },
     },
-    seller: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
+    // seller: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "User",
+    //   required: true,
+    // },
     createdAt: {
       type: Date,
       default: Date.now,

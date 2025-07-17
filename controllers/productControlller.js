@@ -95,7 +95,7 @@ exports.createProduct = async (req, res) => {
       discountedPrice: parseFloat(discountedPrice),
       category,
       stock: parseInt(stock),
-      seller: req.user._id,
+      // seller: req.user._id,
       images: imageData, // This will store S3 URLs in MongoDB
     });
 
