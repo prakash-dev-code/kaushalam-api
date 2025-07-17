@@ -8,19 +8,52 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  name     String
-  email    String  @unique
-  password String
-  moods    Mood[]
+  id                  String     @id @default(uuid())
+  name                String
+  email               String     @unique
+  password            String?    // Optional for OAuth users
+  joinedAt            DateTime   @default(now())
+  role                Role       @default(USER)
+  active              Boolean    @default(true)
+  photo               String     @default("default.jpg")
+  isVerified          Boolean    @default(false)
+  otp                 String?
+  otpExpires          DateTime?
+  bio                 String?    @db.VarChar(150)
+
+  country             String?    // ISO code – validate in app
+
+  // Flattened address fields
+  shippingLocation    String?
+  shippingPhone       String?
+  billingLocation     String?
+  billingPhone        String?
+
+  orders              Order[]    @relation("UserOrders")
+
+  @@index([email])
 }
 
-model Mood {
-  id              Int      @id @default(autoincrement())
-  emoji           String
-  moodTitle       String
-  moodDescription String
-  createdAt       DateTime @default(now())
-  userId          Int
-  user            User     @relation(fields: [userId], references: [id])
+model Order {
+  id            String   @id @default(uuid())
+  user          User     @relation("UserOrders", fields: [userId], references: [id])
+  userId        String
+
+  // Product info comes from MongoDB, so we store just the productId(s)
+  productIds    String[] // e.g., ['ObjectId("...")', 'ObjectId("...")']
+  
+  totalAmount   Float
+  createdAt     DateTime @default(now())
+  status        String   @default("pending")
+
+  // Optionally you can store denormalized product snapshot data as JSON
+  productDetails Json?
+}
+
+enum Role {
+  ADMIN
+  USER
+  STAFF
+  EMPLOYEE
+  MANAGER
 }

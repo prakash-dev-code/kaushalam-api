@@ -34,25 +34,25 @@ const orderRouter = express.Router();
 // orderRouter.get("/auth/failure", authController.failureGoogleLogin);
 // orderRouter.get("/me", authController.protect, authController.getMe);
 
-orderRouter.route("/sign-in").post(authController.singIn);
-orderRouter.route("/sign-up").post(authController.signup);
-orderRouter.route("/verify-email").post(authController.verifyEmail);
-orderRouter.route("/forget-password").post(authController.forgetPassword);
-orderRouter.route("/reset-password/:token").patch(authController.resetPassword);
+// orderRouter.route("/sign-in").post(authController.singIn);
+// orderRouter.route("/sign-up").post(authController.signup);
+// orderRouter.route("/verify-email").post(authController.verifyEmail);
+// orderRouter.route("/forget-password").post(authController.forgetPassword);
+// orderRouter.route("/reset-password/:token").patch(authController.resetPassword);
 // orderRouter.route("/google/").post(authController.googleLogin);
 
 // orderRouter
 //   .route("/change-password")
 //   .patch(authController.protect, authController.changePassword);
 
-orderRouter
-  .route("/:id")
-  .get(authController.protect, orderController.getOrder)
-  .patch(authController.protect, orderController.updateOrder)
-  .delete(authController.protect, orderController.deleteOrder);
-orderRouter
-  .route("/")
-  .get(authController.protect, orderController.getAllOrders)
-  .post(authController.protect, orderController.createOrder);
+// orderRouter
+//   .route("/:id")
+//   .get(authController.protect, orderController.getOrder)
+//   .patch(authController.protect, orderController.updateOrder)
+//   .delete(authController.protect, orderController.deleteOrder);
+// orderRouter
+//   .route("/")
+//   .get(authController.protect, orderController.getAllOrders)
+//   .post(authController.protect, orderController.createOrder);
 
 module.exports = orderRouter;

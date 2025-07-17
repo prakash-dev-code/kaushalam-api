@@ -1,9 +1,37 @@
-const User = require("../models/mongo/userModel");
+// const User = require("../models/mongo/userModel");
 const Factory = require("./handleCrud");
 const Product = require("../models/mongo/productModel");
 const mongoose = require("mongoose");
+// here
+const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
-exports.getAllUsers = Factory.getAll(User);
+const prisma = new PrismaClient();
+const User = prisma.user;
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const doc = await prisma.user.findMany(); // Returns all fields
+
+    res.status(200).json({
+      status: "success",
+      total: doc.length,
+      data: {
+        doc,
+      }, 
+    });
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch users",
+      error: err.message,
+    });
+  }
+};
+
 exports.updateUser = Factory.updateOne(User);
 exports.deleteUser = Factory.deleteOne(User);
 exports.getUser = Factory.getOne(User);
