@@ -74,8 +74,6 @@ exports.createProduct = async (req, res) => {
     const { name, description, price, discountedPrice, category, stock } =
       req.body;
 
-    // Process variants safely
-
     // Process images
     const imageData = (req.files || []).map((file, i) => {
       // Get altText for this index
