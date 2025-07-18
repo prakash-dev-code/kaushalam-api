@@ -74,8 +74,6 @@ exports.createProduct = async (req, res) => {
     const { name, description, price, discountedPrice, category, stock } =
       req.body;
 
-    // Process variants safely
-
     // Process images
     const imageData = (req.files || []).map((file, i) => {
       // Get altText for this index
@@ -95,7 +93,7 @@ exports.createProduct = async (req, res) => {
       discountedPrice: parseFloat(discountedPrice),
       category,
       stock: parseInt(stock),
-      seller: req.user._id,
+      // seller: req.user._id,
       images: imageData, // This will store S3 URLs in MongoDB
     });
 
@@ -113,28 +111,3 @@ exports.createProduct = async (req, res) => {
     });
   }
 };
-
-// Implement this for new arrivals and best sellers:
-
-// ✅ Option 1: Dynamic Calculation (Recommended)
-// Use existing fields like createdAt (for new arrivals) and ratings.count or sales count (if you track it) to dynamically sort products in your backend queries.
-
-// 🔹 New Arrivals
-// Sort by createdAt descending.
-
-// Example:
-
-// javascript
-// Copy
-// Edit
-// const newArrivals = await Product.find().sort({ createdAt: -1 }).limit(10);
-// 🔹 Best Sellers
-// Sort by ratings.count descending (or sales if you implement it).
-
-// Example:
-
-// javascript
-// Copy
-// Edit
-// const bestSellers = await Product.find().sort({ "ratings.count": -1 }).limit(10);
-// ➡️ No changes needed in the schema!
