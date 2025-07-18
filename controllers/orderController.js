@@ -47,6 +47,7 @@ exports.createOrder = async (req, res) => {
         userId,
         productIds: mongoProductIds,
         totalAmount,
+        status: "processing",
         productDetails: products.map((p) => ({
           _id: p._id,
           name: p.name,
@@ -106,6 +107,81 @@ exports.getAllOrders = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching orders:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+};
+
+exports.getAllUsersForAdmin = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    }
+
+    // 🔐 Check if the user is an admin
+    const adminUser = await prisma.user.findUnique({
+      where: { id: decoded.id },
+    });
+
+    if (!adminUser || adminUser.role !== "ADMIN") {
+      return res
+        .status(403)
+        .json({ message: "Forbidden: Admins only can access this resource" });
+    }
+
+    // ✅ Pagination & search query
+    const { page = 1, limit = 10, name = "" } = req.query;
+
+    const currentPage = parseInt(page);
+    const pageSize = parseInt(limit);
+
+    const filters = {};
+
+    if (name) {
+      filters.name = {
+        contains: name,
+        mode: "insensitive",
+      };
+    }
+
+    const totalCount = await prisma.order.count({
+      where: filters,
+    });
+
+    const doc = await prisma.order.findMany({
+      where: filters,
+      skip: (currentPage - 1) * pageSize,
+      take: pageSize,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return res.status(200).json({
+      status: "success",
+      totalCount,
+      currentPage,
+      totalPages: Math.ceil(totalCount / pageSize),
+      data: { doc },
+    });
+  } catch (error) {
+    console.error("Error fetching users for admin:", error);
     return res.status(500).json({
       status: "error",
       message: "Something went wrong",

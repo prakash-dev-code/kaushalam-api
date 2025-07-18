@@ -13,11 +13,40 @@ const User = prisma.user;
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const doc = await prisma.user.findMany();
+    const { page = 1, limit = 10, name = "" } = req.query;
+
+    const currentPage = parseInt(page);
+    const pageSize = parseInt(limit);
+
+    const filters = {};
+
+    // If name query exists, add filter using "contains" for case-insensitive search
+    if (name) {
+      filters.name = {
+        contains: name,
+        mode: "insensitive",
+      };
+    }
+
+    // Get total count of users matching the filter
+    const totalCount = await prisma.user.count({
+      where: filters,
+    });
+
+    const doc = await prisma.user.findMany({
+      where: filters,
+      skip: (currentPage - 1) * pageSize,
+      take: pageSize,
+      orderBy: {
+        joinedAt: "desc",
+      },
+    });
 
     res.status(200).json({
       status: "success",
-      totalCount: doc.length,
+      totalCount,
+      currentPage,
+      totalPages: Math.ceil(totalCount / pageSize),
       data: {
         doc,
       },
@@ -114,7 +143,6 @@ exports.addToCart = async (req, res) => {
 
     let updatedItem;
     if (existingItem) {
-      // Update quantity and price
       updatedItem = await prisma.cartItem.update({
         where: {
           userId_productId: {
@@ -211,25 +239,6 @@ exports.removeFromCart = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
-// exports.clearCart = async (req, res) => {
-//   try {
-//     const user = await User.findById(req.user._id);
-
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-
-//     user.cart = []; // Clear all items
-
-//     await user.save();
-
-//     res.status(200).json({ message: "Cart cleared", cart: user.cart });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
 
 exports.updateUser = async (req, res) => {
   const { userId } = req.params;
