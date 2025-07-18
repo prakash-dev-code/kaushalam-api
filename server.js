@@ -22,5 +22,3 @@ process.on("unhandledRejection", (err) => {
     process.exit(1);
   });
 });
-
-// Errors Outside Express: Unhandled Rejections

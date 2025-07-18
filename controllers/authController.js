@@ -1,8 +1,7 @@
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const sendEmail = require("../utils/email"); // ⬅️ You need to create this utility
+const sendEmail = require("../utils/email");
 const Product = require("./../models/mongo/productModel");
 
 const prisma = new PrismaClient();
@@ -39,7 +38,151 @@ exports.registerUser = async (req, res) => {
       },
     });
 
-    const html = `<p>Your OTP is: <b>${otp}</b>. It expires in 10 minutes.</p>`; // Or use your HTML email
+    // const html = `<p>Your OTP is: <b>${otp}</b>. It expires in 10 minutes.</p>`; // Or use your HTML email
+    const html = `<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"
+  xmlns:o="urn:schemas-microsoft-com:office:office">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>OTO Verify</title>
+
+  <!-- Web Font / @font-face : BEGIN -->
+  <!--[if mso]>
+    <style>
+      * {
+        font-family: 'Roboto', sans-serif !important;
+      }
+    </style>
+  <![endif]-->
+
+  <!--[if !mso]><!-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,600" rel="stylesheet" type="text/css">
+  <!--<![endif]-->
+
+  <style>
+    html,
+    body {
+      margin: 0 auto !important;
+      padding: 0 !important;
+      height: 100% !important;
+      width: 100% !important;
+      font-family: 'Roboto', sans-serif !important;
+      font-size: 14px;
+      margin-bottom: 10px;
+      line-height: 24px;
+      color: #8094ae;
+      font-weight: 400;
+    }
+
+    * {
+      -ms-text-size-adjust: 100%;
+      -webkit-text-size-adjust: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    table,
+    td {
+      mso-table-lspace: 0pt !important;
+      mso-table-rspace: 0pt !important;
+    }
+
+    table {
+      border-spacing: 0 !important;
+      border-collapse: collapse !important;
+      table-layout: fixed !important;
+      margin: 0 auto !important;
+    }
+
+    table table table {
+      table-layout: auto;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    img {
+      -ms-interpolation-mode: bicubic;
+    }
+  </style>
+</head>
+
+<body width="100%" style="margin: 0; padding: 0 !important; background-color: #f5f6fa; mso-line-height-rule: exactly;">
+
+  <!-- Start Preheader -->
+  <div class="preheader"
+    style="display: none; max-width: 0; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #fff; opacity: 0;">
+    Forgot your password? No worries — click the button below to reset it securely.
+  </div>
+  <!-- End Preheader -->
+
+  <center style="width: 100%; background-color: #f5f6fa;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#f5f6fa">
+      <tr>
+        <td style="padding: 40px 0;">
+
+          <!-- Logo Section -->
+          <table style="width:100%;max-width:620px;margin:0 auto;">
+            <tr>
+              <td style="text-align: center; padding-bottom:25px">
+                <a href="#">
+                  <h2>eCommerce</h3>
+                </a>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Main Content Section -->
+          <table style="width:100%;max-width:620px;margin:0 auto;background-color:#ffffff;">
+            <tr>
+              <td style="text-align:center;padding: 30px 30px 15px 30px;">
+                <h2 style="font-size: 18px; color: #6576ff; font-weight: 600; margin: 0;">Verify your email</h2>
+              </td>
+            </tr>
+            <tr>
+              <td style="text-align:center;padding: 0 30px 20px">
+
+                <p style="margin-bottom: 25px;">Copy the OTP below to complete your verification.</p>
+               <p style="font-size: 24px; font-weight: 600; color: #6576ff;">${otp}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="text-align:center;padding: 20px 30px 40px">
+                <p>If you did not request this, please contact us or ignore this message.</p>
+                <p style="margin: 0; font-size: 13px; line-height: 22px; color:#9ea8bb;">
+                  This is an automatically generated email. Please do not reply to this email. If you face any issues,
+                  please contact us at
+                  <a href="mailto:sahuprakash643@gmail.com" style="color: #6576ff;">sahuprakash643@gmail.com</a>
+                </p>
+              </td>
+            </tr>
+          </table>
+
+          <!-- Footer -->
+          <table style="width:100%;max-width:620px;margin:0 auto;">
+            <tr>
+              <td style="text-align: center; padding:25px 20px 0;">
+                <p style="font-size: 13px;">
+                  Copyright © 2025 eCommerce. All rights reserved.
+
+                </p>
+              </td>
+            </tr>
+          </table>
+
+        </td>
+      </tr>
+    </table>
+  </center>
+</body>
+
+</html>
+`;
 
     await sendEmail({
       to: user.email,

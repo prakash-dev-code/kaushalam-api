@@ -5,7 +5,6 @@ const prisma = new PrismaClient();
 
 exports.createOrder = async (req, res) => {
   try {
-    // 1. Verify token
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -15,7 +14,6 @@ exports.createOrder = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.id;
 
-    // 2. Get cart items from PostgreSQL
     const cartItems = await prisma.cartItem.findMany({
       where: { userId },
     });
@@ -24,10 +22,8 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: "Cart is empty" });
     }
 
-    // 3. Extract MongoDB product IDs
     const mongoProductIds = cartItems.map((item) => item.productId);
 
-    // 4. Fetch product details from MongoDB
     const products = await Product.find({
       _id: { $in: mongoProductIds },
     });
@@ -36,12 +32,10 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ message: "Some products not found" });
     }
 
-    // 5. Calculate total amount
     const totalAmount = cartItems.reduce((sum, item) => {
       return sum + item.discountedPrice * item.quantity;
     }, 0);
 
-    // 6. Create the order in PostgreSQL
     const order = await prisma.order.create({
       data: {
         userId,
@@ -57,7 +51,6 @@ exports.createOrder = async (req, res) => {
       },
     });
 
-    // 7. Clear the cart
     await prisma.cartItem.deleteMany({
       where: { userId },
     });

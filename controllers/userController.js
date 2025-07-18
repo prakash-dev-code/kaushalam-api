@@ -1,15 +1,8 @@
-// const User = require("../models/mongo/userModel");
-const Factory = require("./handleCrud");
-const Product = require("../models/mongo/productModel");
-const mongoose = require("mongoose");
-// here
 const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcryptjs");
+
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
 
 const prisma = new PrismaClient();
-const User = prisma.user;
 
 exports.getAllUsers = async (req, res) => {
   try {

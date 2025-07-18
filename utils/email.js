@@ -1,12 +1,8 @@
 const nodemailer = require("nodemailer");
 
 const sendEmail = async (props) => {
-
   const transporter = nodemailer.createTransport({
-    host: "sandbox.smtp.mailtrap.io",
-    // process.env.NODE_ENV === "production"
-    //   ? "sandbox.smtp.mailtrap.io"
-    //   : "sandbox.smtp.mailtrap.io",
+    host: "smtp-relay.brevo.com",
     port: 2525,
     auth: {
       user: process.env.SMTP_USER_NAME, // Update this for puction
@@ -21,7 +17,7 @@ const sendEmail = async (props) => {
 
   const mailOptions = {
     // from: "<sahuprakash643@gmail.com>",
-    from: "<sahuprakash643@gmail.com>",
+    from: "sahuprakash643@gmail.com",
     to: props.to,
     // to: props.email,
     subject: props.subject,
