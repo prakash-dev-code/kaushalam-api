@@ -35,7 +35,6 @@ exports.getAllUsers = async (req, res) => {
 // exports.updateUser = Factory.updateOne(User);
 exports.deleteUser = async (req, res) => {
   const { userId } = req.params;
-  console.log(userId, "ID");
 
   try {
     // Check if user exists
@@ -69,52 +68,84 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
-// exports.getUser = Factory.getOne(User);
-
 exports.addToCart = async (req, res) => {
   try {
-    // const { productId, quantity, discountedPrice } = req.body;
+    const { productId, quantity, discountedPrice } = req.body;
+    const authHeader = req.headers.authorization;
 
-    const { productId } = req.body;
-    const quantity = Number(req.body.quantity);
-    const discountedPrice = Number(req.body.discountedPrice);
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    }
+
+    const userDoc = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      // remove `select` to get all fields
+    });
+
+    if (!userDoc) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const userId = userDoc.id; // assuming `req.user` is populated by auth middleware
 
     if (!productId || isNaN(quantity) || isNaN(discountedPrice)) {
       return res.status(400).json({ message: "Missing or invalid fields" });
     }
 
-    const user = await User.findById(req.user._id);
+    // Check if item already exists in cart
+    const existingItem = await prisma.cartItem.findUnique({
+      where: {
+        userId_productId: {
+          userId,
+          productId,
+        },
+      },
+    });
 
-    const existingIndex = user.cart.findIndex(
-      (item) => item.product.toString() === productId
-    );
-
-    if (existingIndex !== -1) {
-      user.cart[existingIndex].quantity += quantity;
-      user.cart[existingIndex].discountedPrice = discountedPrice; // ✅ Fix
+    let updatedItem;
+    if (existingItem) {
+      // Update quantity and price
+      updatedItem = await prisma.cartItem.update({
+        where: {
+          userId_productId: {
+            userId,
+            productId,
+          },
+        },
+        data: {
+          quantity: existingItem.quantity + Number(quantity),
+          discountedPrice: Number(discountedPrice),
+        },
+      });
     } else {
-      if (!mongoose.isValidObjectId(productId)) {
-        return res.status(400).json({ message: "Invalid product ID" });
-      }
-
-      user.cart.push({
-        product: new mongoose.Types.ObjectId(productId),
-        quantity,
-        discountedPrice,
+      // Create new cart item
+      updatedItem = await prisma.cartItem.create({
+        data: {
+          userId,
+          productId,
+          quantity: Number(quantity),
+          discountedPrice: Number(discountedPrice),
+        },
       });
     }
 
-    await user.save();
-
-    await user.populate({
-      path: "cart.product",
-      select: "name price images stock",
+    res.status(200).json({
+      message: "Cart updated successfully",
+      cartItem: updatedItem,
     });
-
-    res.status(200).json({ message: "Cart updated", cart: user.cart });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error adding to cart:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
@@ -122,36 +153,62 @@ exports.removeFromCart = async (req, res) => {
   try {
     const { productId } = req.body;
 
-    if (!productId || !mongoose.isValidObjectId(productId)) {
-      return res.status(400).json({ message: "Invalid or missing product ID" });
+    if (!productId) {
+      return res.status(400).json({ message: "Missing productId" });
     }
 
-    const user = await User.findById(req.user._id);
+    const authHeader = req.headers.authorization;
 
-    const initialCartLength = user.cart.length;
-
-    // Filter out the item to be removed
-    user.cart = user.cart.filter(
-      (item) => item.product.toString() !== productId
-    );
-
-    if (user.cart.length === initialCartLength) {
-      return res.status(404).json({ message: "Product not found in cart" });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No token provided" });
     }
 
-    await user.save();
+    const token = authHeader.split(" ")[1];
 
-    await user.populate({
-      path: "cart.product",
-      select: "name price images stock",
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    }
+
+    const userId = decoded.id;
+
+    // Check if cart item exists
+    const existingItem = await prisma.cartItem.findUnique({
+      where: {
+        userId_productId: {
+          userId,
+          productId,
+        },
+      },
     });
 
-    res
-      .status(200)
-      .json({ message: "Item removed from cart", cart: user.cart });
+    if (!existingItem) {
+      return res.status(404).json({
+        message: "Item not found in cart",
+      });
+    }
+
+    // Delete cart item
+    await prisma.cartItem.delete({
+      where: {
+        userId_productId: {
+          userId,
+          productId,
+        },
+      },
+    });
+
+    res.status(200).json({
+      message: "Item removed from cart successfully",
+      removedProductId: productId,
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error removing item from cart:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 

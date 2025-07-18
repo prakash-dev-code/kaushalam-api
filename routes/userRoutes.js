@@ -19,12 +19,8 @@ userRouter.patch("/:userId", userController.updateUser);
 //   .route("/change-password")
 //   .patch(authController.protect, authController.changePassword);
 
-// userRouter.patch("/cart/add", authController.protect, userController.addToCart);
-// userRouter.delete(
-//   "/cart/remove",
-//   authController.protect,
-//   userController.removeFromCart
-// );
+userRouter.patch("/cart/add", userController.addToCart);
+userRouter.delete("/cart/remove", userController.removeFromCart);
 
 // userRouter.delete(
 //   "/cart/clear",

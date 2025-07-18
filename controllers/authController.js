@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const sendEmail = require("../utils/email"); // ⬅️ You need to create this utility
+const Product = require("./../models/mongo/productModel");
 
 const prisma = new PrismaClient();
 
@@ -164,7 +165,9 @@ exports.getMe = async (req, res) => {
 
     const userDoc = await prisma.user.findUnique({
       where: { id: decoded.id },
-      // remove `select` to get all fields
+      include: {
+        cart: true,
+      },
     });
 
     if (!userDoc) {
@@ -175,9 +178,29 @@ exports.getMe = async (req, res) => {
     //   user: req.user, // user is already set in protect middleware
     // },
 
+    // Step 2: Fetch MongoDB product details
+    const productIds = userDoc.cart.map((item) => item.productId);
+    const products = await Product.find({ _id: { $in: productIds } });
+
+    // Step 3: Merge product details into cart items
+    const enrichedCart = userDoc.cart.map((item) => {
+      const product = products.find((p) => p._id.toString() === item.productId);
+      return {
+        ...item,
+        product, // null if not found
+        name: product.name,
+      };
+    });
+
+    // Step 4: Return user with enriched cart
     res.status(200).json({
       status: "success",
-      data: { user: userDoc },
+      data: {
+        user: {
+          ...userDoc,
+          cart: enrichedCart, // now includes product info
+        },
+      },
     });
   } catch (error) {
     console.error("Error fetching current user:", error);

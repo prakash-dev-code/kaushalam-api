@@ -20,7 +20,7 @@ model User {
   otp                 String?
   otpExpires          DateTime?
   bio                 String?    @db.VarChar(150)
-
+  cart             CartItem[]
   country             String?    // ISO code – validate in app
 
   // Flattened address fields
@@ -48,6 +48,18 @@ model Order {
 
   // Optionally you can store denormalized product snapshot data as JSON
   productDetails Json?
+}
+
+model CartItem {
+  id              String   @id @default(uuid())
+  productId       String   // MongoDB ObjectId stored as string
+  quantity        Int
+  discountedPrice Float
+
+  userId String
+  user   User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, productId]) // Prevent duplicate product in user's cart
 }
 
 enum Role {
