@@ -212,24 +212,24 @@ exports.removeFromCart = async (req, res) => {
   }
 };
 
-exports.clearCart = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
+// exports.clearCart = async (req, res) => {
+//   try {
+//     const user = await User.findById(req.user._id);
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
 
-    user.cart = []; // Clear all items
+//     user.cart = []; // Clear all items
 
-    await user.save();
+//     await user.save();
 
-    res.status(200).json({ message: "Cart cleared", cart: user.cart });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
+//     res.status(200).json({ message: "Cart cleared", cart: user.cart });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
 
 exports.updateUser = async (req, res) => {
   const { userId } = req.params;

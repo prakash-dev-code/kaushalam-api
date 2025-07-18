@@ -1,93 +1,115 @@
-const Order = require("../models/mongo/orderModel");
-const User = require("../models/mongo/userModel");
-const Factory = require("./handleCrud");
-
-// exports.getAllOrdersAdmin = Factory.getAll(Order);
-exports.updateOrder = Factory.updateOne(Order);
-exports.deleteOrder = Factory.deleteOne(Order);
-exports.getOrder = Factory.getOne(Order);
+const { PrismaClient } = require("@prisma/client");
+const jwt = require("jsonwebtoken");
+const Product = require("../models/mongo/productModel"); // MongoDB model
+const prisma = new PrismaClient();
 
 exports.createOrder = async (req, res) => {
   try {
-    const { items, shippingAddress, status, price } = req.body;
-
-    // Validate
-    if (!items || items.length === 0) {
-      return res.status(400).json({ message: "Order items are required" });
+    // 1. Verify token
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
-    if (
-      !shippingAddress ||
-      !shippingAddress.address ||
-      !shippingAddress.phone
-    ) {
-      return res.status(400).json({ message: "Shipping address is required" });
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    // 2. Get cart items from PostgreSQL
+    const cartItems = await prisma.cartItem.findMany({
+      where: { userId },
+    });
+
+    if (cartItems.length === 0) {
+      return res.status(400).json({ message: "Cart is empty" });
     }
 
-    const newOrder = await Order.create({
-      user: req.user._id,
-      items,
-      shippingAddress,
-      status,
-      price,
+    // 3. Extract MongoDB product IDs
+    const mongoProductIds = cartItems.map((item) => item.productId);
+
+    // 4. Fetch product details from MongoDB
+    const products = await Product.find({
+      _id: { $in: mongoProductIds },
+    });
+
+    if (products.length !== cartItems.length) {
+      return res.status(400).json({ message: "Some products not found" });
+    }
+
+    // 5. Calculate total amount
+    const totalAmount = cartItems.reduce((sum, item) => {
+      return sum + item.discountedPrice * item.quantity;
+    }, 0);
+
+    // 6. Create the order in PostgreSQL
+    const order = await prisma.order.create({
+      data: {
+        userId,
+        productIds: mongoProductIds,
+        totalAmount,
+        productDetails: products.map((p) => ({
+          _id: p._id,
+          name: p.name,
+          price: p.price,
+          images: p.images,
+        })),
+      },
+    });
+
+    // 7. Clear the cart
+    await prisma.cartItem.deleteMany({
+      where: { userId },
     });
 
     res.status(201).json({
-      status: "success",
-      data: newOrder,
+      message: "Order placed successfully",
+      order,
     });
   } catch (err) {
-    res.status(500).json({
-      status: "error",
-      message: err.message,
-    });
+    console.error("Order creation error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
-// const Order = require("../models/orderModel");
-// const User = require("../models/userModel");
-
 exports.getAllOrders = async (req, res) => {
   try {
-    // req.user is set from your protect middleware (auth)
-    const userId = req.user.id;
+    const authHeader = req.headers.authorization;
 
-    // Get user to check role
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(400).json({
-        status: "fail",
-        message: "User not found",
-      });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No token provided" });
     }
 
-    let orders;
+    const token = authHeader.split(" ")[1];
 
-    if (user.role === "admin") {
-      // Admin gets all orders
-      orders = await Order.find({})
-        .populate("user", "name email photo")
-        .populate("items.product", "name images");
-    } else {
-      // Normal user gets only their orders
-      orders = await Order.find({ user: userId })
-        .populate("user", "name email photo")
-        .populate("items.product", "name images");
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
 
-    res.status(200).json({
-      status: "success",
-      result: orders.length,
-      data: {
-        doc: orders,
+    const orders = await prisma.order.findMany({
+      where: {
+        userId: decoded.id,
       },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return res.status(200).json({
+      status: "success",
+      results: orders.length,
+      data: { doc: orders },
     });
   } catch (error) {
     console.error("Error fetching orders:", error);
-    res.status(500).json({
+    return res.status(500).json({
       status: "error",
-      message: "Something went wrong!",
+      message: "Something went wrong",
+      error: error.message,
     });
   }
 };

@@ -6,6 +6,11 @@ const userController = require("../controllers/userController");
 
 const orderRouter = express.Router();
 
+orderRouter
+  .route("/")
+  .get(orderController.getAllOrders)
+  .post(orderController.createOrder);
+
 // Load auth page (optional)
 // orderRouter.get("/auth", authController.loadAuth);
 
@@ -50,9 +55,5 @@ const orderRouter = express.Router();
 //   .get(authController.protect, orderController.getOrder)
 //   .patch(authController.protect, orderController.updateOrder)
 //   .delete(authController.protect, orderController.deleteOrder);
-// orderRouter
-//   .route("/")
-//   .get(authController.protect, orderController.getAllOrders)
-//   .post(authController.protect, orderController.createOrder);
 
 module.exports = orderRouter;
