@@ -51,7 +51,7 @@ backend/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/prakash-dev-code/FullStackExam<yourname><date>
+git clone https://github.com/prakash-dev-code/kaushalam-api
 cd backend
 ```
 
