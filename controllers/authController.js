@@ -117,7 +117,7 @@ exports.registerUser = async (req, res) => {
   <!-- Start Preheader -->
   <div class="preheader"
     style="display: none; max-width: 0; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #fff; opacity: 0;">
-    Forgot your password? No worries — click the button below to reset it securely.
+    Verify OTP for sign-up.
   </div>
   <!-- End Preheader -->
 

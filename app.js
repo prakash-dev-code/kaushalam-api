@@ -41,20 +41,6 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // test db
-app.get("/test-db", async (req, res) => {
-  const net = require("net");
-  const socket = net.createConnection(
-    { host: "db.wlgzeechppcrbpplfxln.supabase.co", port: 5432 },
-    () => {
-      res.send("Database is reachable from Render");
-      socket.end();
-    }
-  );
-
-  socket.on("error", (err) => {
-    res.status(500).send(`Cannot reach DB: ${err.message}`);
-  });
-});
 
 // define routes
 app.use("/api/v1/users", userRoutes);
